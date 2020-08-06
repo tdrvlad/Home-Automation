@@ -107,7 +107,7 @@ def lights_off(thread = None):
 	log_event('Lights turned off')
 
 	if thread != None:
-		thread.send_text('Lights turned on')
+		thread.send_text('Lights turned off')
 
 def christmas_lights_on(thread = None):
 	GPIO.output(relay_christmas_lights,GPIO.LOW)
@@ -186,17 +186,20 @@ nom_scheduler.add_job(christmas_lights_on, 'cron', month = '1,12', hour = lights
 
 lights_win_stop_h, lights_win_stop_m = compute_stop(lights_win_h, lights_win_m, lights_dur_h, lights_dur_m)
 
-nom_scheduler.add_job(lights_off, 'cron', month = '1,2,3,10,11,12', hour = lights_win_stop_h, minute = lights_win_stop_m)
+nom_scheduler.add_job(christmas_lights_off, 'cron', month = '1,2,3,10,11,12', hour = lights_win_stop_h, minute = lights_win_stop_m)
 
 
 #Hourly Lights
 for hour in range(0,6):
-	nom_scheduler.add_job(christmas_lights_on, 'cron', hour = hour, minute = 0)
-	nom_scheduler.add_job(christmas_lights_on, 'cron', hour = hour, minute = lights_hourly_dur_m)
+	nom_scheduler.add_job(lights_on, 'cron', hour = hour, minute = 0)
+	nom_scheduler.add_job(lights_off, 'cron', hour = hour, minute = lights_hourly_dur_m)
 
 nom_scheduler.print_jobs()
+
 nom_scheduler.start()
 
+current_time =  datetime.now().strftime('%H:%M:%S')
+print(current_time)
 
 #------------ Remote Commands ------------ 
 
@@ -296,16 +299,29 @@ for event in listener.listen():
 					else:
 						pass
 
-				if command != -1 and device != -1:
+				if command == 1 and device != -1:  
+					#start 
 					
-					thread.send_text(str(dev_key) + ' to ' + str(comm_key) + ' in ' + str(start_delay) + ' seconds for ' + str(run_time) + ' seconds.')
+					if start_delay != 0:
+						thread.send_text(str(dev_key) + ' to ' + str(comm_key) + ' in ' + str(start_delay) + ' minutes for ' + str(run_time) + ' minutes.')
+					else:
+						thread.send_text(str(dev_key) + ' to ' + str(comm_key) + ' for ' + str(run_time) + ' minutes.')
 
 					current_time =  datetime.now()
 					start_time = current_time + timedelta(0, start_delay * 60)
-					stop_time = current_time + timedelta(0, (start_delay + run_time) *60 )
+					stop_time = current_time + timedelta(0, (start_delay + run_time) * 60)
 					
 					ev_scheduler.add_job(lights_on, 'date', run_date = start_time, args = (thread,))
 					ev_scheduler.add_job(lights_off, 'date', run_date = stop_time, args = (thread,))
+
+				if command == 0 and device != -1: 
+
+					if start_delay != 0:
+						thread.send_text(str(dev_key) + ' to ' + str(comm_key) + ' in ' + str(start_delay) + ' minutes.') 
+
+					current_time =  datetime.now()
+					task_time = current_time + timedelta(0, start_delay * 60)
+					ev_scheduler.add_job(lights_off, 'date', run_date = task_time, args = (thread,))
 
 
 				if command == 0:
@@ -317,13 +333,11 @@ for event in listener.listen():
 
 				if command == 2:
 					print('Reporting Log file')
+					report = ''
+					with open(log_file) as log:
+						for line in (log.readlines() [-20:]):
+							report += '- ' + line + '\n'
+					thread.send_text(report)
 
-					try:
-						with open(log_file) as log:
-							for line in (log.readlines() [-20:]):
-								thread.send_text(line, end = '')
-
-					except:
-						thread.send_text('No log file found.')
-
+					
 
