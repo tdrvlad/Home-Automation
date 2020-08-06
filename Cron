@@ -1,0 +1,17 @@
+
+
+30 21 * 4,5,6,7,8,9 * python /home/pi/Lights_Main.py
+30 20 * 1,2,3,10,11,12 * python /home/pi/Lights_Main.py
+
+0 8 * 4,5,6,7,8,9 * python /home/pi/Irigation.py
+
+0 * 20 12,1 * python /home/pi/Christmas_Lights.py
+
+0 0 * * * python /home/pi/Lights_Hourly.py
+0 1 * * * python /home/pi/Lights_Hourly.py
+0 2 * * * python /home/pi/Lights_Hourly.py
+0 3 * * * python /home/pi/Lights_Hourly.py
+0 4 * * * python /home/pi/Lights_Hourly.py
+0 5 * * * python /home/pi/Lights_Hourly.py
+
+
